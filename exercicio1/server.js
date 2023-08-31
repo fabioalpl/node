@@ -19,11 +19,7 @@ const lista_produtos = {
 
 // Cria um manipulador da rota padrão
 const mid = function (req, res) {   
-    if(req.accepts('application/json')){
-        res.json({ message: "Hello World --> <a href='/users'>Users</a> "});
-    } else {
         res.send ('Hello World'); 
-    }
 }
 app.get ('/', mid);
 
@@ -32,32 +28,54 @@ app.listen (3000, function () {
     console.log ('Servidor rodando na porta 3000')
 });
 
+//Create
+app.post('/produtos', (req, res) => {
+    let descricao = req.body.descricao, valor = req.body.valor, marca = req.body.marca;
+    const max = Math.max(...lista_produtos.produtos.map(p=> p.id));
+    lista_produtos.produtos.push({id: max+1, descricao, valor, marca})
+    res.status(201).json(`{ message: "Produto ${descricao} criado com sucesso",
+                            id: ${max+1}}`)
+})
+
+//Obter a lista de produtos
 app.get('/produtos', function (req, res) {
     res.status(200).json(lista_produtos.produtos);
 });
 
-app.post('/produtos', (req, res) => {
-    res.status(200).json(lista_produtos.produtos);
-});
-
+//Obter um produto específico
 app.get('/produtos/:id', function (req, res) {
     let id = req.params.id
     let idx = lista_produtos.produtos.findIndex (p => p.id == id)
     res.status(200).json(lista_produtos.produtos[idx]);
 });
 
-app.post('/produtos', (req, res) => {
-    let descricao = req.body.descricao, valor = req.body.valor, marca = req.body.marca;
-    const max = Math.max(...produto);
-    lista_produtos.produtos.push({id: max+1, descricao, valor, marca})
-    res.status(201).json(`{ message: "Produto ${descricao} criado com sucesso",
-                            id: ${max+1}}`)
-})
-
+//Alterar um produto
 app.put('/produtos/:id', (req, res) => {
-    res.send (req.body.message);
+    let id = req.params.id
+    let descricao = req.body.descricao, valor = req.body.valor, marca = req.body.marca;
+    let produto = lista_produtos.produtos.find(p => p.id == id)
+
+    if (!produto) {
+        return res.status(404).json({ message: 'Produto não encontrado.' });
+    }
+
+    produto.descricao = descricao
+    produto.marca = marca
+    produto.valor = valor
+
+    res.send({ message: 'Produto atualizado com sucesso.', produto });
 });
 
-app.delete('/produtos/:id', (req, res) => {
-    res.send (req.body.message);
+//Excluir um produto
+app.delete('/produtos/:id', (req, res) => {    
+    let id = req.params.id    
+    let idx = lista_produtos.produtos.findIndex (p => p.id == id)
+    let produto = lista_produtos.produtos[idx]
+
+    if (!produto) {
+        return res.status(404).json({ message: 'Produto não encontrado.' });
+    }
+
+    lista_produtos.produtos.splice(idx, 1)
+    res.send({ message: 'Produto excluído com sucesso.', produto });
 });
